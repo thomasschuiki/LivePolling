@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+<meta charset=utf-8 />
+<script src="../ress/jq143min.js"></script>
+<script src="../ress/jquery.json.min.js"></script>
+<script src="../ress/jquery.websocket.js"></script>
+
+<link rel="stylesheet" href="../ress/style.css" />
+
+<script type="text/javascript">
+$(document).ready(function() {
+		
+	if(!("WebSocket" in window)){
+		$('#chatLog, input, button, #examples').fadeOut("fast");	
+		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');		
+	}else{
+		//The user has WebSockets
+//  	var host = "ws://localhost:8000/socket/server/startDaemon.php";
+//  	var host = "ws://students.fhstp.ac.at:8080/socket/server/server2.php";
+ 	    var host = "ws://192.168.1.107:8080/socket/server/server2.php";
+
+      	var socket = $.websocket(host,{
+      	    open: function(e){
+      	    
+      	        log_message("event","Connection to socket server established. readyState: "+this.readyState);
+      	        this.send("init","admin");
+      	    },
+      	    close: function(e){log_message("event","Connection to socket server lost. readyState: "+this.readyState);},
+      	    message:function(e){ },
+            events: {
+            //werden vom server geschickt
+                msg:function(e){
+                //generic message logger
+                    log_message("message","Received: "+e.data);
+                },
+                login:function(e){
+                
+                    var logedin = (typeof e.data != 'undefined' ) ? e.data : false;
+                    
+                    var loginpanel = $('#adminlogin');
+                    var mask = $('#mask');
+                    
+                    if(logedin !== true)
+                    {            
+                        var winH = $(window).height();
+                        var winW = $(window).width();
+
+                        mask.css({'width':winW,'height':winH,'opacity':0.8});
+
+                        loginpanel.css('top',  winH/2-$(loginpanel).height()/2);
+                        loginpanel.css('left', winW/2-$(loginpanel).width()/2);
+
+                        mask.show();
+                        loginpanel.show();            
+                        $('#adminname').focus();
+                        $('#adminname,#adminpass').keypress(function(event) {  
+                            if (event.keyCode == '13') {  
+                            send_login();  
+                            }  
+                        });  
+                         
+                        $('#login').click(function(){
+                            send_login();
+                        });   
+                        
+
+                    }
+                    else if(logedin === true)
+                    {
+                        mask.hide();
+                        loginpanel.hide();       
+                        mask.click(function(){
+                            $(this).hide();
+                            loginpanel.hide();
+                        });
+
+                    }
+                    
+                },
+                statistics:function(e){
+                console.log(e);
+                    //display statistics
+                    $('#statistics').show();
+                    $('#statistics ul').html('');
+                    $.each(e.choices, function(index,value){                   
+                        $('#statistics ul').append('<li>'+value+': '+e.votes[index]+'</li>');
+                    });   
+                    
+                }
+      	    }  	
+      	}); //end websocket
+      	       		  
+       function log_message(type,msg){
+          console.log(msg);
+          $('#chatLog').append('<p class="'+type+'">'+msg+'</p>');
+        }//End message()
+
+
+        $('#disconnect').click(function(){
+          socket.close();
+        });	//end #disconnect click
+                   
+        function send_login()
+	    {
+            var name=$('#adminname').val();
+            var pass=$('#adminpass').val();
+            
+            socket.send("login",{adminname:name,adminpass:pass});            
+	    }
+	    $('#send').click(function(){
+	    
+	        var q = $('#question').val();
+	        var p1 = $('#possibility1').val();
+	        var p2 = $('#possibility2').val();
+	        var p3 = $('#possibility3').val();
+
+	        socket.send("question",{question:q,
+	                                possibilities:{
+	                                    1:p1,
+	                                    2:p2,
+	                                    3:p3
+	                                } 
+	                               });
+	        
+	        $('#currentQuestion').html("<h2>Question: "+q+"</h2>");
+	        $('#container .possibility,#question').val("");
+	        $('#questioninput').hide();
+	        $('#newQuestion').show();
+	    });
+	    
+	    $('#newQuestion').click(function(){
+	         $('#questioninput').show();
+	         $(this).hide();
+	    });
+	  }// end: the user has websockets
+	
+});
+</script>
+<title>Poll Admin</title>
+
+</head>
+<body>
+  <div id="wrapper">
+  
+  	<div id="container">
+    
+    	<h1>Welcome to the admin interface</h1>
+        <div id="currentQuestion"></div>
+        <div id="chatLog">
+        
+        </div><!-- chatLog -->
+        <div id="questioninput">  
+            <textarea id="question" 
+            onfocus="if(this.value.substr(0, 'Enter'.length) === 'Enter' )this.value=''"
+            >Testquestion?</textarea>
+            <p>
+            <input type="text" name="p1" id="possibility1" class="possibility" value="a"/>
+            <label for="possibility1">M&ouml;glichkeit 1</label>
+            </p>
+            <p>
+            <input type="text" name="p2" id="possibility2" class="possibility" value="b"/>
+            <label for="possibility2">M&ouml;glichkeit 2</label>      
+            </p>
+            <p>
+            <input type="text" name="p3" id="possibility3" class="possibility" value="c"/>
+            <label for="possibility3">M&ouml;glichkeit 3</label>
+            </p>
+            <button id="send">Ask</button>
+            <button id="clear">Clear</button>
+            <button id="disconnect">Disconnect</button>
+        </div><!-- end questioninput-->
+      <div id="statistics"><ul></ul></div>
+      <button id="newQuestion">Send new Question</button>
+	</div><!-- container -->
+  
+  </div><!-- wrapper -->
+<div id="adminlogin">
+
+<input type="text" id="adminname" value="admin" onfocus="if(this.value.substr(0, 'name'.length) === 'name' )this.value=''"/>
+<input type="password" id="adminpass" value="admin" onfocus="if(this.value.substr(0, 'password'.length) === 'password' )this.value=''"/>
+<button id="login" >Login</button>
+
+</div><!-- end adminlogin -->
+<div id="mask"></div>
+</body>
+</html>​

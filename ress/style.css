@@ -1,0 +1,67 @@
+body{font-family:Arial, Helvetica, sans-serif;position:relative;padding:0;margin:0;}
+#container{
+	border:5px solid grey;
+	width:;
+	margin:0 auto;
+	padding:10px;
+	z-index:8000;
+}
+#chatLog{
+	padding:5px;
+	border:1px solid black;	
+    max-height:500px;
+}
+#chatLog p{margin:0;}
+.event{color:#999;}
+.warning{
+	font-weight:bold;
+	color:#CCC;
+}
+.choice{
+  display:inline-block;
+  width:80px;
+  height:80px; 
+  line-height:80px;
+  text-align:center; 
+}
+#adminlogin{
+    display:none;
+    position:absolute;
+    z-index:9999;
+    max-width:220px;
+    background:#999;
+    overflow:hidden;
+}
+#adminlogin input{
+    border:0;
+    height:34px;
+    width:86%;
+    margin:10px;
+}
+#adminlogin button{
+    margin:10px;
+}
+#statistics{
+display:none;
+}
+#mask {
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:9000;
+  background-color:#000;
+}
+#question{
+    display:block;
+    font-family:Arial, Helvetica, sans-serif;
+    width:99.5%;
+    height:60px;
+}
+#newQuestion{
+    display:none;
+}
+button{
+    min-height:36px;
+    min-width:72px;
+}
+

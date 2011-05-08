@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="./jq143min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	if(!("WebSocket" in window)){
+		$('#chatLog, input, button, #examples').fadeOut("fast");	
+		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');		
+	}else{
+		//The user has WebSockets
+  	var socket;
+//  	var host = "ws://localhost:8000/socket/server/startDaemon.php";
+  	var host = "ws://localhost:8080/socket/server/server2.php";
+	  connect();
+	
+	  function connect(){
+	  			
+			  try{
+				  socket = new WebSocket(host);
+				  message('<p class="event">Socket init Status: '+socket.readyState);
+				  socket.onopen = function(){
+					  message('<p class="event">Socket Status: '+socket.readyState+' (open)');	
+				  }
+				
+				  socket.onmessage = function(msg){
+					  message('<p class="message">Received: '+msg.data);					
+				  }
+				
+				  socket.onclose = function(){
+					  message('<p class="event">Socket Status: '+socket.readyState+' (Closed)');
+				  }			
+					
+			  } catch(exception){
+				  message('<p>Error'+exception);
+			  }
+	    }//End connect()			
+	    
+        function send(msg){
+
+            try{
+              socket.send(msg);
+              message('<p class="event">Sent: '+msg);
+            } catch(exception){
+              message('<p class="warning">'+exception);
+            }
+
+        }//end send
+        		  
+        function message(msg){
+          console.log(msg);
+	          $('#chatLog').append(msg+'</p>');
+        }//End message()
+
+        $('#text').keypress(function(event) {
+        if (event.keyCode == '13') {
+           send();
+         }
+        });	
+
+        $('.vote').click(function(){
+            send($(this).attr('id'));			  
+        });
+
+        $('#disconnect').click(function(){
+          socket.close();
+        });		
+        $('#activate_admin_overlay').click(function(){
+            var pos = $(this).position();
+            var loginpanel = $('#adminlogin');
+            
+            loginpanel.show();
+            loginpanel.css({'top':pos.top+20,'left':pos.left});
+
+        });
+	  }// end: the user has websockets
+		
+});
+</script>
+<meta charset=utf-8 />
+<style type="text/css">
+body{font-family:Arial, Helvetica, sans-serif;}
+#container{
+	border:5px solid grey;
+	width:800px;
+	margin:0 auto;
+	padding:10px;
+}
+#chatLog{
+	padding:5px;
+	border:1px solid black;	
+    max-height:500px;
+}
+#chatLog p{margin:0;}
+.event{color:#999;}
+.warning{
+	font-weight:bold;
+	color:#CCC;
+}
+#fast,#normal,#slow{
+  display:inline-block;
+  width:80px;
+  height:80px; 
+  line-height:80px;
+  text-align:center; 
+}
+#fast{
+  background:red;
+}
+#normal{
+  background:green;
+}
+#slow{
+  background:yellow;
+}
+#adminlogin{
+display:none;
+position:absolute;
+}
+</style>
+<title>WebSockets Client</title>
+
+</head>
+<body>
+  <div id="wrapper">
+  
+  	<div id="container">
+    
+    	<h1>WebSockets Client</h1>
+        
+        <div id="chatLog">
+        
+        </div><!-- chatLog -->
+        
+      <div id="fast"    class="vote"></div>
+      <div id="normal"  class="vote"></div>
+      <div id="slow"    class="vote"></div>
+      <button id="disconnect">Disconnect</button>
+      <a href="#" id="activate_admin_overlay">admin</a>
+	</div><!-- container -->
+  
+  </div><!-- wrapper -->
+<div id="adminlogin">
+<input type="text" id="adminname" value="name"/>
+<input type="password" id="adminpass" value="password"/>
+<button id="login" >Login</button>
+</div>
+</body>
+</html>​
