@@ -24,11 +24,14 @@ $(document).ready(function() {
             //generic message logger
                 log_message("message","Received: "+e.data);
             },
+            voted:function(e){
+                $('#question').html('<h1>'+e.data+'</h1>');
+            },
             asking:function(e){
-                $('#question').html('<h1>'+e.question+'</h1>');
+                $('#question').html('<h2>'+e.question+'</h2>');
                 $('#choices').html('');
                 $.each(e.possibilities, function(index,value){                   
-                    $('#choices').append('<p><a href="#" class="choice" data-p="'+index+'">'+value+'</a>');
+                    $('#choices').append('<a href="#" class="choice" data-p="'+index+'">'+value+'</a>');
                 });                
             }
   	    }  	
@@ -39,6 +42,7 @@ $(document).ready(function() {
           $('#chatLog').append('<p class="'+type+'">'+msg+'</p>');
         }//End message()
         $('.choice').live('click',function(){
+            $('#choices').html('');
             var choice = $(this).data('p');
 //            var choicename = $(this).text();
 //            socket.send("vote",{votenumber:choice,possibility:choicename});

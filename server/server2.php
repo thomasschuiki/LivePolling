@@ -22,7 +22,8 @@ function process($user, $msg, $server){
                 $command['data']=false;
                 
                 $server->send($user->socket,json_encode($command));
-                
+            }else if($decoded->data === 'user')
+            {    
                 //if new user connects send him the most recent question            
                 $question = $server->getQuestion();
                 if($question){
@@ -35,7 +36,7 @@ function process($user, $msg, $server){
         break;
         case 'vote': 
             $return = count_vote($user, $decoded->data, $server);
-            $return['type'] = 'msg';
+            $return['type'] = 'voted';
             $server->send($user->socket,json_encode($return));
             unset($return);
      //send statistics data to admin
@@ -67,7 +68,7 @@ function process($user, $msg, $server){
         case 'statistics':
             $return = $server->getQuestion();
             $return->type='statistics';
-            $server->send($admin->socket,json_encode($return));
+            $server->send($user->socket,json_encode($return));
         break;
         
         case 'question':
@@ -94,11 +95,11 @@ function count_vote($user,$data, $server)
 
             $user->data['ip'] = $user->ip;
                     
-            $return['data'] = "thanks for voting";
+            $return['data'] = "Thanks for voting!";
             
         }else if($user->data['vote'] === $question->id) //user already voted
         {
-            $return['data'] = "you already voted";
+            $return['data'] = "You already voted!";
         }
 
     return $return;

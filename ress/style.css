@@ -1,12 +1,11 @@
-body{font-family:Arial, Helvetica, sans-serif;position:relative;padding:0;margin:0;}
+body{font-family:Arial, Helvetica, sans-serif;position:relative;padding:0;margin:0; color:#333;}
 #container{
-	border:5px solid grey;
-	width:;
 	margin:0 auto;
 	padding:10px;
 	z-index:8000;
 }
 #chatLog{
+display:none;
 	padding:5px;
 	border:1px solid black;	
     max-height:500px;
@@ -18,11 +17,19 @@ body{font-family:Arial, Helvetica, sans-serif;position:relative;padding:0;margin
 	color:#CCC;
 }
 .choice{
-  display:inline-block;
+  display:block;
   width:80px;
   height:80px; 
+  margin-bottom:5px;
   line-height:80px;
   text-align:center; 
+  color:#333;
+  background-color:#BACBD9;
+  border:2px solid #7C8EA6;
+  cursor:pointer;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:13px;
 }
 #adminlogin{
     display:none;
@@ -40,9 +47,6 @@ body{font-family:Arial, Helvetica, sans-serif;position:relative;padding:0;margin
 }
 #adminlogin button{
     margin:10px;
-}
-#statistics{
-display:none;
 }
 #mask {
   position:absolute;
