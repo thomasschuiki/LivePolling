@@ -1,0 +1,3 @@
+Die Idee dieser Applikation ist es, dem Benutzer eine einfache Möglichkeit zur Verfügung zu stellen, schnell kleine Umfragen zu erheben. Es gibt eine Adminoberfläche, von der aus Fragen an alle Clients gesendet werden können. Sobald die ersten Abstimmungen eintreffen, wird dort auch eine simple statistische Auswertung angezeigt.
+
+Das Projekt ist als Web-Applikation mit Javascript und PHP umgesetzt und verwendet Websockets zur Kommunikation. Ein Schwerpunkt bei der Entwicklung lag außerdem auf der mobilen Optimierung. Hierbei muss angemerkt werden, dass die Anwendung derzeit leider nur auf iPhone/iPad mit mindestens iOS4.2  funktioniert. Auf anderen mobilen Geräten sind Websockets noch nicht implementiert.
