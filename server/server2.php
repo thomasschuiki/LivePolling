@@ -136,5 +136,6 @@ function check_login($user,$data,$server)
 
 require_once 'WebSocketServer.class.php';
 // new WebSocketServer( socket address, socket port, callback function )
-$webSocket = new WebSocketServer("192.168.1.107", 8080, 'process');
+$webSocket = new WebSocketServer("192.168.1.71", 8080, 'process');
+//$webSocket = new WebSocketServer("10.2.11.160", 8080, 'process');
 $webSocket->run();

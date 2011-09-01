@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
 		
 	if(!("WebSocket" in window)){
@@ -8,7 +7,8 @@ $(document).ready(function() {
 		//The user has WebSockets
 //  	var host = "ws://localhost:8000/socket/server/startDaemon.php";
 //  	var host = "ws://students.fhstp.ac.at:8080/socket/server/server2.php";
- 	    var host = "ws://192.168.1.107:8080/socket/server/server2.php";
+ 	    var host = "ws://192.168.1.71:8080/socket/server/server2.php";
+//        var host = "ws://10.2.11.160:8080/socket/server/server2.php";
   	
   	var socket = $.websocket(host,{
   	    open: function(e){
