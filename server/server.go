@@ -17,13 +17,14 @@ func clientHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, p)
 }
 
+var clients = make(map[*websocket.Conn]bool)
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+  CheckOrigin: func(r *http.Request) bool {return true},
 }
 
-func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -63,9 +64,11 @@ func reader(conn *websocket.Conn) {
 
 func main() {
 	http.HandleFunc("/", clientHandler)
-	http.HandleFunc("/ws", wsEndpoint)
+	http.HandleFunc("/ws", wsHandler)
 
+  log.Println("Starting Server on Port 8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
+  log.Println("Listening on Port 8080")
 }
