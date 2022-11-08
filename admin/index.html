@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
 <meta charset=utf-8 />
-<script src="../ress/jq143min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
 <script src="../ress/jquery.json.min.js"></script>
 <script src="../ress/jquery.websocket.js"></script>
 
@@ -11,10 +11,10 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
-		
+
 	if(!("WebSocket" in window)){
-		$('#chatLog, input, button, #examples').fadeOut("fast");	
-		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');		
+		$('#chatLog, input, button, #examples').fadeOut("fast");
+		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');
 	}else{
 		//The user has WebSockets
 //  	var host = "ws://localhost:8000/socket/server/startDaemon.php";
@@ -24,7 +24,7 @@ $(document).ready(function() {
 
       	var socket = $.websocket(host,{
       	    open: function(e){
-      	    
+
       	        log_message("event","Connection to socket server established. readyState: "+this.readyState);
       	        this.send("init","admin");
       	    },
@@ -37,14 +37,14 @@ $(document).ready(function() {
                     log_message("message","Received: "+e.data);
                 },
                 login:function(e){
-                
+
                     var logedin = (typeof e.data != 'undefined' ) ? e.data : false;
-                    
+
                     var loginpanel = $('#adminlogin');
                     var mask = $('#mask');
-                    
+
                     if(logedin !== true)
-                    {            
+                    {
                         var winH = $(window).height();
                         var winW = $(window).width();
 
@@ -54,31 +54,31 @@ $(document).ready(function() {
                         loginpanel.css('left', winW/2-$(loginpanel).width()/2);
 
                         mask.show();
-                        loginpanel.show();            
+                        loginpanel.show();
                         $('#adminname').focus();
-                        $('#adminname,#adminpass').keypress(function(event) {  
-                            if (event.keyCode == '13') {  
-                            send_login();  
-                            }  
-                        });  
-                         
+                        $('#adminname,#adminpass').keypress(function(event) {
+                            if (event.keyCode == '13') {
+                            send_login();
+                            }
+                        });
+
                         $('#login').click(function(){
                             send_login();
-                        });   
-                        
+                        });
+
 
                     }
                     else if(logedin === true)
                     {
                         mask.hide();
-                        loginpanel.hide();       
+                        loginpanel.hide();
                         mask.click(function(){
                             $(this).hide();
                             loginpanel.hide();
                         });
 
                     }
-                    
+
                 },
                 statistics:function(e){
                     //console.log(e);
@@ -87,22 +87,22 @@ $(document).ready(function() {
                     if($('#statistics ul#'+e.id).length == 0)
                     {
                         $('#statistics').prepend('<strong>'+e.text+'</strong><ul id="'+e.id+'"></ul>');
-                        $.each(e.choices, function(index,value){                   
+                        $.each(e.choices, function(index,value){
                             $('#statistics #'+e.id).append('<li>'+value+': '+e.votes[index]+'</li>');
-                        });   
-                        
+                        });
+
                     }else{
                         $('#statistics #'+e.id).html('');
-                        $.each(e.choices, function(index,value){                   
+                        $.each(e.choices, function(index,value){
                             $('#statistics #'+e.id).append('<li>'+value+': '+e.votes[index]+'</li>');
-                        });   
+                        });
                     }
 
-                    
+
                 }
-      	    }  	
+      	    }
       	}); //end websocket
-      	       		  
+
        function log_message(type,msg){
           console.log(msg);
           $('#chatLog').append('<p class="'+type+'">'+msg+'</p>');
@@ -112,16 +112,16 @@ $(document).ready(function() {
         $('#disconnect').click(function(){
           socket.close();
         });	//end #disconnect click
-                   
+
         function send_login()
 	    {
             var name=$('#adminname').val();
             var pass=$('#adminpass').val();
-            
-            socket.send("login",{adminname:name,adminpass:pass});            
+
+            socket.send("login",{adminname:name,adminpass:pass});
 	    }
 	    $('#send').click(function(){
-	    
+
 	        var q = $('#question').val();
 	        var p1 = $('#possibility1').val();
 	        var p2 = $('#possibility2').val();
@@ -132,20 +132,20 @@ $(document).ready(function() {
 	                                    1:p1,
 	                                    2:p2,
 	                                    3:p3
-	                                } 
+	                                }
 	                               });
-	        
+
 	        $('#container .possibility,#question').val("");
 	        $('#questioninput').hide();
 	        $('#newQuestion').show();
 	    });
-	    
+
 	    $('#newQuestion').click(function(){
 	         $('#questioninput').show();
 	         $(this).hide();
 	    });
 	  }// end: the user has websockets
-	
+
 });
 </script>
 <title>Poll Admin</title>
@@ -153,16 +153,16 @@ $(document).ready(function() {
 </head>
 <body id="admin">
   <div id="wrapper">
-  
+
   	<div id="container">
-    
+
     	<h1>LivePoll Admin</h1>
 
         <div id="chatLog">
-        
+
         </div><!-- chatLog -->
-        <div id="questioninput">  
-            <textarea id="question" 
+        <div id="questioninput">
+            <textarea id="question"
             onfocus="if(this.value.substr(0, 'Enter'.length) === 'Enter' )this.value=''"
             >Testquestion?</textarea>
             <p>
@@ -171,7 +171,7 @@ $(document).ready(function() {
             </p>
             <p>
             <input type="text" name="p2" id="possibility2" class="possibility" value="b"/>
-            <label for="possibility2">M&ouml;glichkeit 2</label>      
+            <label for="possibility2">M&ouml;glichkeit 2</label>
             </p>
             <p>
             <input type="text" name="p3" id="possibility3" class="possibility" value="c"/>

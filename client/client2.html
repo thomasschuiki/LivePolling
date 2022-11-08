@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="./jq143min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
 
 <script type="text/javascript">
 $(document).ready(function() {
-		
+
 	if(!("WebSocket" in window)){
-		$('#chatLog, input, button, #examples').fadeOut("fast");	
-		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');		
+		$('#chatLog, input, button, #examples').fadeOut("fast");
+		$('<p>Oh no, you need a browser that supports WebSockets. How about <a href="http://www.google.com/chrome">Google Chrome</a>?</p>').appendTo('#container');
 	}else{
 		//The user has WebSockets
   	var socket;
 //  	var host = "ws://localhost:8000/socket/server/startDaemon.php";
   	var host = "ws://localhost:8080/socket/server/server2.php";
 	  connect();
-	
+
 	  function connect(){
-	  			
+
 			  try{
 				  socket = new WebSocket(host);
 				  message('<p class="event">Socket init Status: '+socket.readyState);
 				  socket.onopen = function(){
-					  message('<p class="event">Socket Status: '+socket.readyState+' (open)');	
+					  message('<p class="event">Socket Status: '+socket.readyState+' (open)');
 				  }
-				
+
 				  socket.onmessage = function(msg){
-					  message('<p class="message">Received: '+msg.data);					
+					  message('<p class="message">Received: '+msg.data);
 				  }
-				
+
 				  socket.onclose = function(){
 					  message('<p class="event">Socket Status: '+socket.readyState+' (Closed)');
-				  }			
-					
+				  }
+
 			  } catch(exception){
 				  message('<p>Error'+exception);
 			  }
-	    }//End connect()			
-	    
+	    }//End connect()
+
         function send(msg){
 
             try{
@@ -48,7 +48,7 @@ $(document).ready(function() {
             }
 
         }//end send
-        		  
+
         function message(msg){
           console.log(msg);
 	          $('#chatLog').append(msg+'</p>');
@@ -58,23 +58,23 @@ $(document).ready(function() {
         if (event.keyCode == '13') {
            send();
          }
-        });	
+        });
 
         $('.vote').click(function(){
             var vote = $(this).attr('id');
-            var JSONstring = 
+            var JSONstring =
             {
-                "vote": vote 
+                "vote": vote
             };
 
             send(JSONstring);
-            			  
+
         });
 
         $('#disconnect').click(function(){
           socket.close();
-        });	
-        var adminclick = false;	
+        });
+        var adminclick = false;
         $('#activate_admin_overlay').click(function(){
 
                 var pos = $(this).position();
@@ -83,7 +83,7 @@ $(document).ready(function() {
             if(adminclick == false){
                 loginpanel.css({'top':pos.top+20,'left':pos.left});
                 loginpanel.show();
-                adminclick=true;  
+                adminclick=true;
 
             }else if(adminclick==true){
                 loginpanel.hide();
@@ -95,17 +95,17 @@ $(document).ready(function() {
             var name=$('#adminname').val();
             var pass=$('#adminpass').val();
 
-            var JSONstring = 
+            var JSONstring =
             {
-                "adminname": name, 
+                "adminname": name,
                 "adminpass": pass
             };
-            
+
             send(JSONstring);
 
         });
 	  }// end: the user has websockets
-		
+
 });
 </script>
 <meta charset=utf-8 />
@@ -119,7 +119,7 @@ body{font-family:Arial, Helvetica, sans-serif;}
 }
 #chatLog{
 	padding:5px;
-	border:1px solid black;	
+	border:1px solid black;
     max-height:500px;
 }
 #chatLog p{margin:0;}
@@ -131,9 +131,9 @@ body{font-family:Arial, Helvetica, sans-serif;}
 #fast,#normal,#slow{
   display:inline-block;
   width:80px;
-  height:80px; 
+  height:80px;
   line-height:80px;
-  text-align:center; 
+  text-align:center;
 }
 #fast{
   background:red;
@@ -154,22 +154,22 @@ position:absolute;
 </head>
 <body>
   <div id="wrapper">
-  
+
   	<div id="container">
-    
+
     	<h1>WebSockets Client</h1>
-        
+
         <div id="chatLog">
-        
+
         </div><!-- chatLog -->
-        
+
       <div id="fast"    class="vote"></div>
       <div id="normal"  class="vote"></div>
       <div id="slow"    class="vote"></div>
       <button id="disconnect">Disconnect</button>
       <a href="#" id="activate_admin_overlay">admin</a>
 	</div><!-- container -->
-  
+
   </div><!-- wrapper -->
 <div id="adminlogin">
 <input type="text" id="adminname" value="name"/>
