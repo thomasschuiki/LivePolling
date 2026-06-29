@@ -1,44 +1,46 @@
 package websocket
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
 	"log"
 
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
 )
 
 type Client struct {
-	ID   string
-	Conn *websocket.Conn
-	Pool *Pool
+	ID             string
+	Conn           *websocket.Conn
+	Pool           *Pool
+	Store          *Store
+	IsAdmin        bool
+	Authenticated  bool
 }
 
 type Message struct {
-	Type string `json:"type"`
-	Body string `json:"body"`
+	Type          string   `json:"type"`
+	Data          json.RawMessage `json:"data,omitempty"`
+	Text          string   `json:"text,omitempty"`
+	Question      string   `json:"question,omitempty"`
+	Choices       []string `json:"choices,omitempty"`
+	Possibilities []string `json:"possibilities,omitempty"`
+	Votes         []int    `json:"votes,omitempty"`
+	ID            string   `json:"id,omitempty"`
 }
 
-// Read constantly listens for Messages on the Clients connection
-func (c *Client) Read() {
+func (c *Client) Read(ctx context.Context) {
 	defer func() {
 		c.Pool.Unregister <- c
-		c.Conn.Close()
+		c.Store.RemoveAdmin(c)
+		c.Conn.Close(websocket.StatusNormalClosure, "")
 	}()
 
 	for {
-		mt, p, err := c.Conn.ReadMessage()
+		_, p, err := c.Conn.Read(ctx)
 		if err != nil {
-		  log.Println(err)
-		  return
-		}
-		msg := &Message{}
-		if err := c.Conn.ReadJSON(msg); err != nil {
-			log.Println("error reading json: ", msg, err)
+			log.Printf("error reading msg: %v", err)
 			return
 		}
-		fmt.Printf("%s > %+v\n", c.ID, msg)
-		message := Message{Type: string(mt), Body: string(p)}
-		// c.Pool.Broadcast <- message
-		fmt.Printf("Message Received: %+v\n", message)
+		HandleMessage(c, c.Pool, c.Store, p)
 	}
 }

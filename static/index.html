@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>LivePolling</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>LivePolling</h1>
+      <span id="status" class="status disconnected">Disconnected</span>
+    </header>
+
+    <main id="content">
+      <div class="waiting">
+        <p>Waiting for a question...</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/ws-client.js"></script>
+  <script>
+    const client = new PollingClient();
+    const statusEl = document.getElementById('status');
+    const contentEl = document.getElementById('content');
+
+    let currentQuestion = null;
+    let hasVoted = false;
+
+    client.on('connect', () => {
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'status connected';
+      client.init('user');
+    });
+
+    client.on('close', () => {
+      statusEl.textContent = 'Disconnected';
+      statusEl.className = 'status disconnected';
+      setTimeout(() => client.connect(), 2000);
+    });
+
+    client.on('error', () => {
+      statusEl.textContent = 'Error';
+      statusEl.className = 'status error';
+    });
+
+    client.on('question', ({ question, possibilities }) => {
+      hasVoted = false;
+      currentQuestion = { question, possibilities };
+      renderQuestion();
+    });
+
+    client.on('voted', (data) => {
+      renderVoteResult(data);
+    });
+
+    client.on('clear', () => {
+      currentQuestion = null;
+      hasVoted = false;
+      contentEl.innerHTML = '<div class="waiting"><p>Waiting for a question...</p></div>';
+    });
+
+    function renderQuestion() {
+      const choices = currentQuestion.possibilities
+        .map((choice, i) => `<button class="choice" onclick="castVote(${i})">${choice}</button>`)
+        .join('');
+
+      contentEl.innerHTML = `
+        <div class="question-box">
+          <h2>${escapeHtml(currentQuestion.question)}</h2>
+          <div class="choices">${choices}</div>
+        </div>
+      `;
+    }
+
+    function renderVoteResult(data) {
+      const message = typeof data === 'string' ? data : 'Vote recorded!';
+      contentEl.innerHTML = `
+        <div class="result">
+          <p class="message">${escapeHtml(message)}</p>
+          ${currentQuestion ? `<p class="waiting">Waiting for results...</p>` : ''}
+        </div>
+      `;
+    }
+
+    function castVote(index) {
+      if (hasVoted) return;
+      hasVoted = true;
+      client.vote(index);
+      contentEl.innerHTML = '<div class="result"><p class="message">Vote submitted!</p></div>';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    client.connect().catch(() => {});
+  </script>
+</body>
+</html>

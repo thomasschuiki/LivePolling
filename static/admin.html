@@ -1,184 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
-<meta charset=utf-8 />
-    <link rel="stylesheet" href="/static/style.css">
-<title>Poll Admin</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Poll Admin - LivePolling</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body id="admin">
-  <div class="wrapper">
-      <header class="header"><h1>Websocket Admin</h1></header>
-    <article class="main">
-      <div id="statistics"></div>
-    </article>
-    <aside class="aside aside-1">
-        <form id="questioninput">
-        <div>
-            <textarea id="question"
-            onfocus="if(this.value.substr(0, 'Enter'.length) === 'Enter' )this.value=''"
-            >Testquestion?</textarea>
-            <p>
-            <input type="text" name="p1" id="p1" class="possibility" value="a"/>
-            <label for="p1">M&ouml;glichkeit 1</label>
-            </p>
-            <p>
-            <input type="text" name="p2" id="p2" class="possibility" value="b"/>
-            <label for="p2">M&ouml;glichkeit 2</label>
-            </p>
-            <p>
-            <input type="text" name="p3" id="p3" class="possibility" value="c"/>
-            <label for="p3">M&ouml;glichkeit 3</label>
-            </p>
-            <button id="sendQuestions">Ask</button>
-            <button id="clear">Clear</button>
-            <button id="disconnect">Disconnect</button>
-        </div><!-- end questioninput-->
-        </form>
-    <button onclick="send();">Send Message</button>
-    </aside>
-      <aside class="aside aside-2" ><div id="chatlog"></div></aside>
-    <footer class="footer">
-      <div id="adminlogin">
-      <input type="text" id="adminname" value="admin" onfocus="if(this.value.substr(0, 'name'.length) === 'name' )this.value=''"/>
-      <input type="password" id="adminpass" value="admin" onfocus="if(this.value.substr(0, 'password'.length) === 'password' )this.value=''"/>
-      <button id="login" >Login</button>
-      </div><!-- end adminlogin -->
-      <div id="mask"></div>
-    </footer>
+<body>
+  <div class="container admin">
+    <header>
+      <h1>Poll Admin</h1>
+      <span id="status" class="status disconnected">Disconnected</span>
+    </header>
+
+    <div id="login-overlay" class="overlay">
+      <div class="login-box">
+        <h2>Admin Login</h2>
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="admin">
+        <button id="login-btn">Login</button>
+        <p id="login-error" class="error"></p>
+      </div>
+    </div>
+
+    <main id="main-content" class="hidden">
+      <section id="stats-section">
+        <h2>Statistics</h2>
+        <div id="statistics">
+          <p class="empty">No active question</p>
+        </div>
+      </section>
+
+      <section id="question-section">
+        <h2>Create Question</h2>
+        <textarea id="question-input" placeholder="Enter your question..."></textarea>
+        <div id="choices">
+          <div class="choice-row">
+            <input type="text" class="choice-input" placeholder="Choice 1" value="Yes">
+          </div>
+          <div class="choice-row">
+            <input type="text" class="choice-input" placeholder="Choice 2" value="No">
+          </div>
+        </div>
+        <button id="add-choice">+ Add Choice</button>
+        <div class="actions">
+          <button id="ask-btn" class="primary">Ask Question</button>
+          <button id="reset-btn" class="secondary">Reset Votes</button>
+          <button id="clear-btn" class="danger">Clear</button>
+        </div>
+      </section>
+    </main>
   </div>
-<script type="text/javascript">
 
-    if(!("WebSocket" in window)){
-      window.alert('Oh no, you need a browser that supports WebSockets. ');
-    } else {
-      //The user has WebSockets
-      let sock = null;
-      const wsuri = "ws://localhost:8080/ws";
+  <script src="/static/ws-client.js"></script>
+  <script>
+    const client = new PollingClient();
+    const statusEl = document.getElementById('status');
+    const loginOverlay = document.getElementById('login-overlay');
+    const mainContent = document.getElementById('main-content');
+    const loginError = document.getElementById('login-error');
+    const statsEl = document.getElementById('statistics');
+    const questionInput = document.getElementById('question-input');
+    const choicesEl = document.getElementById('choices');
 
-      window.onload = function() {
-        sock = new WebSocket(wsuri);
+    let authenticated = false;
 
-        sock.onopen = function() {
-          console.log(`connected to ${wsuri}`);
-          log_message("event",`connected to ${wsuri}`);
-          log_message("event",`Connection to socket server "${wsuri}" established. readyState: ${sock.readyState}`);
-          sock.send(JSON.stringify({type:"init", body:"admin"}));
-          const sendButton = document.getElementById("sendQuestions");
-          sendButton.onclick = function() {
-            const q = document.getElementById("question").value;
-            const p1 = document.getElementById("p1").value;
-            const p2 = document.getElementById("p2").value;
-            const p3 = document.getElementById("p3").value;
-            const questionnaire = {
-              question:q,
-              possibilities: [
-                p1,
-                p2,
-                p3
-              ]
-            }
-            const message = {type: "question", body: JSON.stringify(questionnaire)}
-            log_message(`sending questionnaire: ${questionnaire}`)
-            sock.send(JSON.stringify(message));
-          }
-        }
+    client.on('connect', () => {
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'status connected';
+      client.init('admin');
+    });
 
-        sock.onclose = function(e) {
-          console.log(`connection closed (" ${e.code} ")`);
-          log_message("event",`connection closed (" ${e.code} ")`);
-        }
+    client.on('close', () => {
+      statusEl.textContent = 'Disconnected';
+      statusEl.className = 'status disconnected';
+      authenticated = false;
+      loginOverlay.classList.remove('hidden');
+      mainContent.classList.add('hidden');
+      setTimeout(() => client.connect(), 2000);
+    });
 
-        sock.onmessage = function(e) {
-          console.log(`message received: ${e.data}`, e);
-          log_message("event",`message received: ${e.data}`);
-        }
+    client.on('error', () => {
+      statusEl.textContent = 'Error';
+      statusEl.className = 'status error';
+    });
 
-        sock.onerror = function(e) {
-          console.error("Socket error: ", e)
-          log_message("error",`Socket error: ${e}`)
-        }
-      };
-
-      function wsClose() {
-        log_message("event","Connection to socket server lost. readyState: "+sock.readyState);
+    client.on('login', (data) => {
+      if (data === true) {
+        authenticated = true;
+        loginOverlay.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        client.requestStatistics();
       }
-      function handleLogin(e) {
+    });
 
-        var logedin = (typeof e.data != 'undefined' ) ? e.data : false;
-
-        var loginpanel = $('#adminlogin');
-        var mask = $('#mask');
-
-        if(logedin !== true)
-      {
-          var winH = $(window).height();
-          var winW = $(window).width();
-
-          mask.css({'width':winW,'height':winH,'opacity':0.8});
-
-          loginpanel.css('top',  winH/2-$(loginpanel).height()/2);
-          loginpanel.css('left', winW/2-$(loginpanel).width()/2);
-
-          mask.show();
-          loginpanel.show();
-          $('#adminname').focus();
-          $('#adminname,#adminpass').keypress(function(event) {
-            if (event.keyCode == '13') {
-              send_login();
-            }
-          });
-
-          $('#login').click(function(){
-            send_login();
-          });
-
-
-        }
-        else if(logedin === true)
-      {
-          mask.hide();
-          loginpanel.hide();
-          mask.click(function(){
-            $(this).hide();
-            loginpanel.hide();
-          });
-
-        }
+    client.on('message', (data) => {
+      if (!authenticated && typeof data === 'string') {
+        loginError.textContent = data;
       }
-      function handleStats(e) {
+    });
 
-        if($('#statistics ul#'+e.id).length == 0)
-      {
-          $('#statistics').prepend('<strong>'+e.text+'</strong><ul id="'+e.id+'"></ul>');
-          $.each(e.choices, function(index,value){
-            $('#statistics #'+e.id).append('<li>'+value+': '+e.votes[index]+'</li>');
-          });
+    client.on('statistics', (stats) => {
+      renderStats(stats);
+    });
 
-        }else{
-          $('#statistics #'+e.id).html('');
-          $.each(e.choices, function(index,value){
-            $('#statistics #'+e.id).append('<li>'+value+': '+e.votes[index]+'</li>');
-          });
-        }
+    client.on('clear', () => {
+      statsEl.innerHTML = '<p class="empty">No active question</p>';
+    });
+
+    function renderStats(stats) {
+      if (!stats.text) {
+        statsEl.innerHTML = '<p class="empty">No active question</p>';
+        return;
       }
 
+      const totalVotes = stats.votes.reduce((a, b) => a + b, 0);
+      const bars = stats.choices.map((choice, i) => {
+        const votes = stats.votes[i];
+        const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+        return `
+          <div class="stat-row">
+            <span class="stat-label">${escapeHtml(choice)}</span>
+            <div class="bar-container">
+              <div class="bar" style="width: ${pct}%"></div>
+            </div>
+            <span class="stat-count">${votes} (${pct}%)</span>
+          </div>
+        `;
+      }).join('');
 
-        function log_message(type, msg) {
-          let chatlog = document.getElementById('chatlog');
-        chatlog.insertAdjacentHTML('beforeend',`<p class="${type}">${msg}</p>`);
-        }
+      statsEl.innerHTML = `
+        <p class="question-text">${escapeHtml(stats.text)}</p>
+        <p class="total">Total votes: ${totalVotes}</p>
+        ${bars}
+      `;
+    }
 
-      function send_login()
-      {
-        var name=$('#adminname').val();
-        var pass=$('#adminpass').val();
+    function getChoices() {
+      return Array.from(document.querySelectorAll('.choice-input'))
+        .map(input => input.value.trim())
+        .filter(v => v.length > 0);
+    }
 
-        socket.send("login",{adminname:name,adminpass:pass});
+    function addChoice() {
+      const count = choicesEl.children.length + 1;
+      const div = document.createElement('div');
+      div.className = 'choice-row';
+      div.innerHTML = `<input type="text" class="choice-input" placeholder="Choice ${count}">`;
+      choicesEl.appendChild(div);
+    }
+
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      loginError.textContent = '';
+      client.login(username, password);
+    });
+
+    document.getElementById('username').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('password').focus();
+    });
+
+    document.getElementById('password').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+
+    document.getElementById('add-choice').addEventListener('click', addChoice);
+
+    document.getElementById('ask-btn').addEventListener('click', () => {
+      const question = questionInput.value.trim();
+      const choices = getChoices();
+      if (!question || choices.length < 2) {
+        alert('Please enter a question and at least 2 choices');
+        return;
       }
-      }// end: the user has websockets
+      client.sendQuestion(question, choices);
+    });
 
-</script>
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (confirm('Reset all votes?')) {
+        client.reset();
+      }
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      if (confirm('Clear the current question?')) {
+        client.clear();
+        questionInput.value = '';
+      }
+    });
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    client.connect().catch(() => {});
+  </script>
 </body>
-</html>​
+</html>

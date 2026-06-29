@@ -3,17 +3,11 @@ package websocket
 import (
 	"net/http"
 
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-  CheckOrigin: func(r *http.Request) bool {return true},
+func Accept(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
+	return websocket.Accept(w, r, &websocket.AcceptOptions{
+		OriginPatterns: []string{"*"},
+	})
 }
-
-// Upgrades the connection to a Websocket Connection
-func Upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error){
-  return upgrader.Upgrade(w, r, nil)
-}
-

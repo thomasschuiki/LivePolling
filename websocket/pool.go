@@ -1,12 +1,19 @@
 package websocket
 
-import "fmt"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"nhooyr.io/websocket"
+)
 
 type Pool struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
 	Broadcast  chan Message
+	Store      *Store
 }
 
 func NewPool() *Pool {
@@ -15,36 +22,44 @@ func NewPool() *Pool {
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
 		Broadcast:  make(chan Message),
+		Store:      NewStore(),
 	}
 }
 
-// Start will constantly liste to all messages on any channel and act accordingly
-func (pool *Pool) Start() {
+func (c *Client) Send(ctx context.Context, msg Message) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	return c.Conn.Write(ctx, websocket.MessageText, data)
+}
+
+func (pool *Pool) Start(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case client := <-pool.Register:
-            client.ID = fmt.Sprintf("id-%d",len(pool.Clients) + 1)
+			client.ID = fmt.Sprintf("id-%d", len(pool.Clients)+1)
+			client.Store = pool.Store
 			fmt.Println("registering client:", client.ID)
 			pool.Clients[client] = true
-			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
-			for client := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: "info", Body: "New User Joined - " + client.ID})
-			}
+			fmt.Println("Size of Connection Pool:", len(pool.Clients))
 		case client := <-pool.Unregister:
 			fmt.Println("unregistering client:", client.ID)
 			delete(pool.Clients, client)
-			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
-			for client := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: "info", Body: "User Disconnected - " + client.ID})
-			}
+			fmt.Println("Size of Connection Pool:", len(pool.Clients))
 		case message := <-pool.Broadcast:
 			fmt.Println("Sending message to all clients in Pool")
 			for client := range pool.Clients {
-				if err := client.Conn.WriteJSON(message); err != nil {
+				if err := client.Send(context.Background(), message); err != nil {
 					fmt.Println("error broadcasting:", err)
-					return
 				}
 			}
 		}
 	}
+}
+
+func (c *Client) WriteJSON(msg Message) error {
+	return c.Send(context.Background(), msg)
 }
